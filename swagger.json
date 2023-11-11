@@ -1,0 +1,406 @@
+{
+  "definitions": {
+    "User": {
+      "properties": {
+        "id": {
+          "readOnly": true,
+          "type": "integer",
+          "example": 132
+        },
+        "name": {
+          "type": "string",
+          "example": "Bob"
+        },
+        "followers": {
+          "type": "array",
+          "$ref": "#/definitions/UserShort"
+        },
+        "following": {
+          "type": "array",
+          "$ref": "#/definitions/UserShort"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "UserShort": {
+      "properties": {
+        "id": {
+          "readOnly": true,
+          "type": "integer",
+          "example": 123
+        },
+        "name": {
+          "readOnly": true,
+          "type": "string",
+          "example": "John"
+        }
+      }
+    },
+    "Tweet": {
+      "properties": {
+        "id": {
+          "readOnly": true,
+          "type": "integer",
+          "example": 123
+        },
+        "content": {
+          "type": "string",
+          "example": "Amazing cakes"
+        },
+        "attachments": {
+
+        },
+        "author": {
+          "$ref": "#/definitions/UserShort"
+        },
+        "likes": {
+          "type": "array",
+          "$ref": "#/definitions/UserShort"
+        }
+      },
+      "required": [
+        "content",
+        "author"
+      ]
+    }
+  },
+  "paths": {
+    "/api/tweets": {
+      "get": {
+        "tags": ["tweets"],
+        "description": "Get tweets for user",
+        "parameters": [
+          {
+            "name": "api-key",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "tweets": {
+                  "$ref": "#/definitions/Tweet",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["tweets"],
+        "description": "Post new tweet",
+        "parameters": [
+          {
+            "name": "api-key",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "tweet_data",
+            "in": "body",
+            "type": "string"
+          },
+          {
+            "name": "tweet_medias",
+            "in": "body",
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tweet successfully posted",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "tweet_id": {
+                  "type": "integer",
+                  "example": 11
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/medias": {
+      "post": {
+        "tags": ["media"],
+        "description": "Post media in tweet",
+        "parameters": [
+          {
+            "name": "api-key",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "file",
+            "in": "formData",
+            "type": "file"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "media_id": {
+                  "type": "integer",
+                  "example": 33
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tweets/{id}": {
+      "delete": {
+        "tags": ["tweets"],
+        "description": "Delete tweet",
+        "parameters": [
+          {
+            "name": "api-key",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tweets/{id}/likes": {
+      "post": {
+        "tags": ["likes"],
+        "description": "Like tweet",
+        "parameters": [
+          {
+            "name": "api-key",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["likes"],
+        "description": "Unlike tweet",
+        "parameters": [
+          {
+            "name": "api-key",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}/follow": {
+      "post": {
+        "tags": ["followers"],
+        "description": "Follow someone",
+        "parameters": [
+          {
+            "name": "api-key",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["followers"],
+        "description": "Unfollow someone",
+        "parameters": [
+          {
+            "name": "api-key",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "tags": ["users"],
+        "description": "Get your data",
+        "parameters": [
+          {
+            "name": "api-key",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "user": {
+                  "$ref": "#/definitions/User"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "tags": ["users"],
+        "description": "Get user data",
+        "parameters": [
+          {
+            "name": "api-key",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "user": {
+                  "$ref": "#/definitions/User"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "info": {
+    "title": "Twitter Clone",
+    "version": "1.0.0"
+  },
+  "swagger": "2.0"
+}
