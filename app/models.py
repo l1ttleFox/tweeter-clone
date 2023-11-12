@@ -1,40 +1,72 @@
-from .main import db
+from sqlalchemy import UniqueConstraint, func
+from .app import db
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 
 
 class User(db.Model):
+    """
+    Модель пользователя приложения.
+    """
     __tablename__ = "users"
     
     id = db.Collumn(db.Integer, primary_key=True)
     name = db.Collumn(db.String(50), nullable=False)
     api_key = db.Collumn(db.String(100), nullable=False, unique=True)
     
-    likes_association = db.relationship("Likes", back_populates="user")
+    likes_association = db.relationship("Like", back_populates="user")
     likes = association_proxy("likes_association", "tweet")
     
-    def to_json(self):
-        pass
+    def to_json(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "followers": [
+                {
+                    "id": i_follower.id,
+                    "name": i_follower.name
+                }
+                for i_follower in self.followers
+            ],
+            "following": [
+                {
+                    "id": i_content_maker.id,
+                    "name": i_content_maker.name
+                }
+                for i_content_maker in self.content_makers
+            ]
+        }
     
     @hybrid_property
     def followers(self):
-        followers_ids = db.session.query(Followers.follower_id).filter(
-            Followers.content_maker_id == self.id
+        """
+        Метод получения фолловеров пользователя.
+        """
+        followers_ids = db.session.query(Follower.follower_id).filter(
+            Follower.content_maker_id == self.id
         ).all()
         result = db.session.query(User).filter(User.id.in_(followers_ids)).all()
         return result
     
     @hybrid_property
     def content_makers(self):
+        """
+        Метод получения всех, на кого подписан пользователь.
+        :return:
+        """
         content_makers_ids = db.session.query(
-            Followers.content_maker_id).filter(
-            Followers.follower_id == self.id).all()
+            Follower.content_maker_id).filter(
+            Follower.follower_id == self.id).all()
         result = db.session.query(User).filter(
-            User.id.in_(content_makers_ids)).all()
+            User.id.in_(content_makers_ids)).order_by(
+            func.count(User.followers).desc()).all()
         return result
-        
+
 
 class Tweet(db.Model):
+    """
+    Модель твита.
+    """
     __tablename__ = "tweets"
     
     id = db.Collumn(db.Integer, primary_key=True)
@@ -42,26 +74,55 @@ class Tweet(db.Model):
     author_id = db.Collumn(db.Integer, db.ForeignKey("users.id"))
     
     author = db.relationship("User", backref="tweets")
-    likes_association = db.relationship("Likes", back_populates="tweet")
+    likes_association = db.relationship("Like", back_populates="tweet")
     likes = association_proxy("likes_association", "user")
     
-    def to_json(self):
-        pass
+    def to_json(self) -> dict:
+        return {
+            "id": self.id,
+            "content": self.content,
+            "author": {
+                "id": self.author.id,
+                "name": self.author.name
+            },
+            "likes": [
+                {
+                    "user_id": i_like.id,
+                    "name": i_like.name
+                }
+                for i_like in self.likes
+            ]
+        }
 
 
-class Likes(db.Model):
+class Like(db.Model):
+    """
+    Модель для хранения информации о лайках на твитах.
+    """
     __tablename__ = "likes"
+    __table_args__ = (
+        UniqueConstraint("tweet_id", "user_id", name="tweet_user_uc"),
+    )
     
     id = db.Collumn(db.Integer, primary_key=True)
-    twit_id = db.Collumn(db.Integer, db.ForeignKey("tweets.id"))
+    tweet_id = db.Collumn(db.Integer, db.ForeignKey("tweets.id"))
     user_id = db.Collumn(db.Integer, db.ForeignKey("users.id"))
     
-    twit = db.relationship("Tweet", back_populates="likes")
+    tweet = db.relationship("Tweet", back_populates="likes")
     user = db.relationship("User", back_populates="likes")
 
 
-class Followers(db.Model):
+class Follower(db.Model):
+    """
+    Модель для хранения информации о подписках.
+    """
     __tablename__ = "followers"
+    __table_args__ = (
+        UniqueConstraint(
+            "content_maker_id",
+            "follower_id",
+            name="content_maker_follower_uc"),
+    )
     
     id = db.Collumn(db.Integer, primary_key=True)
     content_maker_id = db.Collumn(db.Integer, db.ForeignKey("user.id"))
@@ -70,3 +131,15 @@ class Followers(db.Model):
     content_maker = db.relationship("User", backref="followers")
     follower = db.relationship("User", backref="followers")
 
+
+class Media(db.Model):
+    """
+    Модель для хранения медиа.
+    """
+    __tablename__ = "medias"
+    
+    id = db.Collumn(db.Integer, primary_key=True)
+    filename = db.Collumn(db.String(100), nullable=False)
+    tweet_id = db.Collumn(db.Integer, db.ForeignKey("tweets.id"), nullable=True)
+    
+    tweet = db.relationship("Tweet", backref="likes")
