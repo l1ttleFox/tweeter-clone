@@ -5,7 +5,7 @@ from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 import os
 
 app = create_app()
-    
+
 
 def error(status: int = 400):
     """
@@ -23,7 +23,7 @@ def success(status: int = 200):
     :return: ответ API.
     """
     return jsonify({"result": True}), status
-    
+
 
 @app.before_request
 def check_api_key():
@@ -38,7 +38,7 @@ def check_api_key():
         db.session.query(User).filter(User.api_key == api_key).one()
     except (NoResultFound, MultipleResultsFound):
         return error()
-    
+
 
 @app.route("/", methods=["GET"])
 def index():
@@ -61,9 +61,12 @@ def get_or_post_tweets():
         tweets = list()
         for i_content_maker in user.content_makers:
             tweets.extend(
-                [i_tweet.to_json() for i_tweet in i_content_maker.tweets]
+                [
+                    i_tweet.to_json() for i_tweet in
+                    i_content_maker.ordered_tweets
+                ]
             )
-            
+        
         return jsonify({
             "result": True,
             "tweets": tweets
@@ -81,7 +84,7 @@ def get_or_post_tweets():
             i_media = db.session.query(Media).filter(
                 Media.id == i_media_id).one()
             i_media.tweet_id = new_tweet.id
-            
+        
         db.session.commit()
         
         return jsonify({
@@ -156,10 +159,10 @@ def like_or_dislike(id):
                 Like.tweet_id == tweet.id).filter(
                 Like.user_id == user.id).one()
             db.session.delete(like)
-            
+        
         except NoResultFound:
             return error(404)
-        
+    
     db.session.commit()
     return success()
 
@@ -190,7 +193,7 @@ def follow_or_unfollow(id):
                 Follower.content_maker_id == content_maker.id).filter(
                 Follower.follower_id == follower.id).one()
             db.session.delete(follow)
-            
+        
         except NoResultFound:
             return error(404)
     
@@ -225,6 +228,4 @@ def get_any_user_info(id):
 
 
 if __name__ == '__main__':
-    app = create_app()
     app.run(debug=True, host="0.0.0.0", port=80)
-    

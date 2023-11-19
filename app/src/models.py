@@ -1,4 +1,4 @@
-from sqlalchemy import UniqueConstraint, func
+from sqlalchemy import UniqueConstraint, func, desc
 from .app import db
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -52,7 +52,6 @@ class User(db.Model):
     def content_makers(self):
         """
         Метод получения всех, на кого подписан пользователь.
-        :return:
         """
         content_makers_ids = db.session.query(
             Follower.content_maker_id).filter(
@@ -60,6 +59,18 @@ class User(db.Model):
         result = db.session.query(User).filter(
             User.id.in_(content_makers_ids)).order_by(
             func.count(User.followers).desc()).all()
+        return result
+    
+    @hybrid_property
+    def ordered_tweets(self):
+        """
+        Метод получения твитов, которые написал пользователь,
+        отсортированных по новизне.
+        """
+        result = db.session.query(
+            User.tweets).filter(
+            User.id == self.id).order_by(
+            desc(Tweet.added_at)).limit(5).all()
         return result
 
 
@@ -71,6 +82,7 @@ class Tweet(db.Model):
     
     id = db.Collumn(db.Integer, primary_key=True)
     content = db.Collumn(db.String(140))
+    added_at = db.Collumn(db.DateTime, default=db.func.now())
     author_id = db.Collumn(db.Integer, db.ForeignKey("users.id"))
     
     author = db.relationship("User", backref="tweets")
@@ -81,6 +93,10 @@ class Tweet(db.Model):
         return {
             "id": self.id,
             "content": self.content,
+            "attachments": [
+                i_media.filename
+                for i_media in self.media
+            ],
             "author": {
                 "id": self.author.id,
                 "name": self.author.name
@@ -142,4 +158,4 @@ class Media(db.Model):
     filename = db.Collumn(db.String(100), nullable=False)
     tweet_id = db.Collumn(db.Integer, db.ForeignKey("tweets.id"), nullable=True)
     
-    tweet = db.relationship("Tweet", backref="likes")
+    tweet = db.relationship("Tweet", backref="media")

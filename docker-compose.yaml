@@ -1,0 +1,36 @@
+version: "1"
+services:
+  app:
+    build:
+      context: app
+    stop_signal: SIGKILL
+    ports:
+      - "5000:5000"
+    networks:
+      - main
+    command:
+      - "gunicorn"
+      - "routes:app"
+      - "-b"
+      - "0.0.0.0:5000"
+
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/:/var/lib/postgres/data
+    networks:
+      - main
+    command:
+      - "postgres"
+      - "-c"
+      - "logging_collector=on"
+      - "-c"
+      - "log_directory=/var/lib/postgresql/data"
+
+networks:
+  main:
