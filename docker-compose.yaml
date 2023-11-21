@@ -5,32 +5,43 @@ services:
       context: app
     stop_signal: SIGKILL
     ports:
-      - "5000:5000"
+      - "80:80"
     networks:
       - main
+    depends_on:
+      postgres:
+        condition: service_healthy
     command:
-      - "gunicorn"
-      - "routes:app"
-      - "-b"
-      - "0.0.0.0:5000"
+      - "/usr/bin/supervisord"
+      - "-c"
+      - "/etc/supervisor/conf.d/supervisord.ini"
 
   postgres:
     image: postgres
+    restart: always
     environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=admin
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=postgres
     ports:
       - "5432:5432"
-    volumes:
-      - ./db/:/var/lib/postgres/data
     networks:
       - main
+    volumes:
+      - ./db/:/var/lib/postgres/data
     command:
       - "postgres"
+      - "-c"
+      - "log_destination=stderr"
       - "-c"
       - "logging_collector=on"
       - "-c"
       - "log_directory=/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   main:
