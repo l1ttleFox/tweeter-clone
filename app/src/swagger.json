@@ -94,6 +94,18 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid API key",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            }
           }
         }
       },
@@ -136,6 +148,18 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid API key",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            }
           }
         }
       }
@@ -172,6 +196,18 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid API key",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            }
           }
         }
       }
@@ -201,6 +237,42 @@
                 "result": {
                   "type": "boolean",
                   "example": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid API key",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Tweet does not belongs to user",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No tweet found by ID",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
                 }
               }
             }
@@ -236,6 +308,30 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid API key",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No tweet found by ID",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            }
           }
         }
       },
@@ -263,6 +359,30 @@
                 "result": {
                   "type": "boolean",
                   "example": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid API key",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No tweet found by ID or user does not liked that tweet",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
                 }
               }
             }
@@ -298,6 +418,30 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid API key",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found by id",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            }
           }
         }
       },
@@ -328,6 +472,30 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid API key",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User does not subscribed",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            }
           }
         }
       }
@@ -355,6 +523,18 @@
                 },
                 "user": {
                   "$ref": "#/definitions/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid API key",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
                 }
               }
             }
@@ -390,6 +570,18 @@
                 },
                 "user": {
                   "$ref": "#/definitions/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid API key",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": false
                 }
               }
             }
