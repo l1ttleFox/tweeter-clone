@@ -1,10 +1,12 @@
+# from app.src.app import create_app, db
 from app import create_app, db
-from models import Media, User, Tweet, Like, Follower
-from flask import render_template, request, jsonify
+from .models import Media, User, Tweet, Like, Follower
+from flask import request, jsonify
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 import os
 from typing import Any
 
+# application = create_app(True)
 application = create_app()
 
 
@@ -31,7 +33,7 @@ def backend_error(e: Any, status: int = 500):
     Служебная функция для генерации типовых неудачных ответов при возникновении
     ошибок на стороне сервера.
     :param e: (Exception) возникшая ошибка.
-    :param status: статус ответа.
+    :param status: (int) статус ответа.
     :return: ответ API.
     """
     return jsonify({
@@ -52,11 +54,21 @@ def check_api_key():
         try:
             api_key = request.headers.get("api-key", None)
             if api_key is None:
-                return error()
+                return error(301)
             db.session.query(User).filter(User.api_key == api_key).one()
             
         except (NoResultFound, MultipleResultsFound):
-            return error()
+            return error(302)
+        
+
+@application.errorhandler(500)
+def internal_error_handler(e):
+    """
+    Обработчик внутренних ошибок сервера.
+    :return: Возвращает описание ошибки в нужном формате
+    """
+    db.session.rollback()
+    return backend_error(e)
 
 
 @application.route("/api/tweets", methods=["GET", "POST"])
@@ -71,12 +83,10 @@ def get_or_post_tweets():
     if request.method == "GET":
         tweets = list()
         for i_content_maker in user.cm_followers:
-            tweets.extend(
-                [
-                    i_tweet.to_json() for i_tweet in
-                    i_content_maker.ordered_tweets()
-                ]
-            )
+            tweets.append([
+                i_tweet.to_json() for i_tweet in
+                i_content_maker.ordered_tweets()
+            ])
 
         return jsonify({
             "result": True,
@@ -84,27 +94,26 @@ def get_or_post_tweets():
         }), 200
 
     elif request.method == "POST":
-        try:
-            data = request.json
-            new_tweet = Tweet(
-                content=data["tweet_data"],
-                author_id=user.id
-            )
-            db.session.add(new_tweet)
-            media_ids = data.get("tweet_media_ids", None)
-            for i_media_id in media_ids:
-                i_media = db.session.query(Media).filter(
-                    Media.id == i_media_id).one()
-                i_media.tweet_id = new_tweet.id
+        data = request.json
+        new_tweet = Tweet(
+            content=data["tweet_data"],
+            author_id=user.id
+        )
+        db.session.add(new_tweet)
+        db.session.commit()
         
-            db.session.commit()
-        
-            return jsonify({
-                "result": True,
-                "tweet_id": new_tweet.id
-            }), 201
-        except Exception as e:
-            return backend_error(e)
+        media_ids = data.get("tweet_media_ids", [])
+        for i_media_id in media_ids:
+            i_media = db.session.query(Media).filter(
+                Media.id == i_media_id).one()
+            i_media.tweet_id = new_tweet.id
+    
+        db.session.commit()
+    
+        return jsonify({
+            "result": True,
+            "tweet_id": new_tweet.id
+        }), 201
 
 
 @application.route("/api/medias", methods=["POST"])
@@ -112,20 +121,18 @@ def post_media():
     """
     Эндпоинт API для загрузки медиа к твитам.
     """
-    try:
-        file = request.files["file"]
-        file.save(os.path.join(application.config["UPLOAD_FOLDER"], file.filename))
-    
-        new_media = Media(filename=file.filename)
-        db.session.add(new_media)
-        db.session.commit()
-    
-        return jsonify({
-            "result": True,
-            "media_id": new_media.id
-        }), 201
-    except Exception as e:
-        return backend_error(e)
+    file = request.files["file"]
+    path = os.path.join(application.config["UPLOAD_FOLDER"], file.filename)
+    file.save(path)
+
+    new_media = Media(filename=path)
+    db.session.add(new_media)
+    db.session.commit()
+
+    return jsonify({
+        "result": True,
+        "media_id": new_media.id
+    }), 201
     
 
 @application.route("/api/tweets/<int:id>", methods=["DELETE"])
@@ -164,14 +171,11 @@ def like_or_dislike(id):
         return error(404)
 
     if request.method == "POST":
-        try:
-            new_like = Like(
-                tweet_id=tweet.id,
-                user_id=user.id
-            )
-            db.session.add(new_like)
-        except Exception as e:
-            return backend_error(e)
+        new_like = Like(
+            tweet_id=tweet.id,
+            user_id=user.id
+        )
+        db.session.add(new_like)
         
     elif request.method == "DELETE":
         try:
@@ -201,14 +205,11 @@ def follow_or_unfollow(id):
         return error(404)
 
     if request.method == "POST":
-        try:
-            new_follow = Follower(
-                content_maker_id=content_maker.id,
-                follower_id=follower.id
-            )
-            db.session.add(new_follow)
-        except Exception as e:
-            return backend_error(e)
+        new_follow = Follower(
+            content_maker_id=content_maker.id,
+            follower_id=follower.id
+        )
+        db.session.add(new_follow)
         
     elif request.method == "DELETE":
         try:

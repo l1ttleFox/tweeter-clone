@@ -1,27 +1,7 @@
 from sqlalchemy import UniqueConstraint, func, desc
-from app import db
+from app.src.app import db
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
-
-
-class Follower(db.Model):
-    """
-    Модель для хранения информации о подписках.
-    """
-    __tablename__ = "followers"
-    __table_args__ = (
-        UniqueConstraint(
-            "content_maker_id",
-            "follower_id",
-            name="content_maker_follower_uc"),
-    )
-
-    id = db.Column(db.Integer, primary_key=True)
-    content_maker_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    follower_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-
-    content_maker = db.relationship("User", foreign_keys=[content_maker_id,], back_populates="f_association")
-    follower = db.relationship("User", foreign_keys=[follower_id,], back_populates="cm_association")
 
 
 class User(db.Model):
@@ -34,13 +14,21 @@ class User(db.Model):
     name = db.Column(db.String(50), nullable=False)
     api_key = db.Column(db.String(100), nullable=False, unique=True)
 
-    cm_association = db.relationship("Follower", foreign_keys="Follower.follower_id", back_populates="follower")
-    f_association = db.relationship("Follower", foreign_keys="Follower.content_maker_id", back_populates="content_maker")
+    cm_association = db.relationship(
+        "Follower",
+        foreign_keys="Follower.follower_id",
+        back_populates="follower"
+    )
+    f_association = db.relationship(
+        "Follower",
+        foreign_keys="Follower.content_maker_id",
+        back_populates="content_maker"
+    )
     likes_association = db.relationship("Like", back_populates="user")
     cm_followers = association_proxy("cm_association", "content_maker")
     f_followers = association_proxy("f_association", "follower")
     likes = association_proxy("likes_association", "tweet")
-
+    
     def to_json(self) -> dict:
         return {
             "id": self.id,
@@ -78,13 +66,6 @@ class User(db.Model):
                 for i_follower in result
             ]
 
-    @hybrid_property
-    def followers_amount(self):
-        res = 0
-        for _ in self.followers:
-            res += 1
-        return res
-
     def content_makers(self):
         """
         Метод получения всех, на кого подписан пользователь.
@@ -92,7 +73,8 @@ class User(db.Model):
         content_makers_ids = db.session.query(
             Follower.content_maker_id).filter(
             Follower.follower_id == self.id).all()
-        result = db.session.query(User, func.count(User.f_followers).label("f_amount")).filter(
+        result = db.session.query(
+            User, func.count(User.f_followers).label("f_amount")).filter(
             User.id.in_(content_makers_ids)).order_by(
             desc("f_amount")).all()
         return result
@@ -103,8 +85,8 @@ class User(db.Model):
         отсортированных по новизне.
         """
         result = db.session.query(
-            User.tweets).filter(
-            User.id == self.id).order_by(
+            Tweet).filter(
+            Tweet.author_id == self.id).order_by(
             desc(Tweet.added_at)).limit(5).all()
         return result
 
@@ -144,6 +126,34 @@ class Tweet(db.Model):
                 for i_like in self.likes
             ]
         }
+    
+
+class Follower(db.Model):
+    """
+    Модель для хранения информации о подписках.
+    """
+    __tablename__ = "followers"
+    __table_args__ = (
+        UniqueConstraint(
+            "content_maker_id",
+            "follower_id",
+            name="content_maker_follower_uc"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    content_maker_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    follower_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+
+    content_maker = db.relationship(
+        "User",
+        foreign_keys=[content_maker_id, ],
+        back_populates="f_association"
+    )
+    follower = db.relationship(
+        "User",
+        foreign_keys=[follower_id, ],
+        back_populates="cm_association"
+    )
 
 
 class Like(db.Model):
