@@ -1,14 +1,14 @@
 import pytest
-from app.src.app import db as _db
-from app.src.models import User, Tweet, Follower, Like
-from app.src.routes import application
+from flask_app.src.app import db as _db
+from flask_app.src.models import Follower, Like, Tweet, User
+from flask_app.src.routes import application
 
 
 @pytest.fixture
 def app():
     with application.app_context():
         _db.create_all()
-        
+
         test_user = User(name="TestUser", api_key="qwe")
         u1 = User(name="TweetUser", api_key="tweet")
         u2 = User(name="FollowUser", api_key="follow")
@@ -22,12 +22,12 @@ def app():
         _db.session.add(f)
         _db.session.add(t1)
         _db.session.add(t2)
-        
+
         like = Like(tweet_id=2, user_id=1)
         _db.session.add(like)
-        
+
         _db.session.commit()
-        
+
         yield application
         _db.session.close()
         _db.drop_all()
@@ -37,8 +37,8 @@ def app():
 def client(app):
     client = app.test_client()
     yield client
-    
-    
+
+
 @pytest.fixture
 def db(app):
     with app.app_context():
